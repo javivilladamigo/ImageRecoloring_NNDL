@@ -5,7 +5,14 @@ from skimage.color import rgb2lab, lab2rgb
 import os
 
 
-class AverageMeter:
+'''
+    Some functions adapted from:
+    https://towardsdatascience.com/colorizing-black-white-images-with-u-net-and-conditional-gan-a-tutorial-81b2df111cd8
+'''
+class LossMeter:
+    '''
+        Class to store and perform calculation with losses
+    '''
     def __init__(self):
         self.reset()
         
@@ -18,12 +25,12 @@ class AverageMeter:
         self.avg = float(self.sum / self.count)
 
 def create_loss_meters():
-    loss_D_fake = AverageMeter()
-    loss_D_real = AverageMeter()
-    loss_D = AverageMeter()
-    loss_G_GAN = AverageMeter()
-    loss_G_L1 = AverageMeter()
-    loss_G = AverageMeter()
+    loss_D_fake = LossMeter()   # D loss on fake images 
+    loss_D_real = LossMeter()   # D loss on real images 
+    loss_D = LossMeter()        # D total adversarial loss
+    loss_G_GAN = LossMeter()    # G adversarial loss
+    loss_G_L1 = LossMeter()     # G L1 loss
+    loss_G = LossMeter()        # G total loss
     
     return {'loss_D_fake': loss_D_fake,
             'loss_D_real': loss_D_real,
@@ -48,33 +55,37 @@ def my_lab_to_rgb(L, ab):
         Returns:
         * rgb (RGB numpy image): rgb output images  (range: [0, 255], numpy array)
     '''
-     
     
     L = (L + 1.) * 50.
     ab = ab * 110.
     
     Lab = torch.cat([L, ab], dim=1).permute(0, 2, 3, 1).cpu().numpy()
     
-    rgb_imgs = []
+    rgb_list = []
     
     for img in Lab:
-        img_rgb = lab2rgb(img)#
-        rgb_imgs.append(img_rgb)
-    return np.stack(rgb_imgs, axis=0)
+        img_rgb = lab2rgb(img)
+        rgb_list.append(img_rgb)
+
+    return np.stack(rgb_list, axis=0)
 
 
 def visualize(model, data, epoch, sample, out_path, save=True):
+    '''
+        Visualize results at current epoch 
+    '''
 
     model.net_G.eval()
 
     with torch.no_grad():
+        # setup input and retrieve generated images with forward()
         model.setup_input(data)
         model.forward()
         
     model.net_G.train()
     fake_color = model.fake_color.detach()
 
-    real_color = model.ab
+    real_color = model.ab 
     L = model.L
   
     ab = model.fake_color
@@ -83,7 +94,6 @@ def visualize(model, data, epoch, sample, out_path, save=True):
     fake_imgs = my_lab_to_rgb(L, fake_color)
     real_imgs = my_lab_to_rgb(L, real_color)
 
-    #fig = plt.figure(figsize=(15,15))
     fig, ax = plt.subplots(6, 5, figsize=(12,14))
     
     for i in range(5):
@@ -136,7 +146,7 @@ def save_losses(out_path, filename, loss_dict, epoch):
 
 class Plotter_GAN(object):
     '''
-        Plot loss for G and D with Training and Validation,
+        Plot loss for training and validation losses for G and D 
     '''
 
     def __init__(self):

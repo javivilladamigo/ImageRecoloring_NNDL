@@ -1,2 +1,4 @@
 val2017
 */*.pdf
+*.pyc
+*.DS_Store
