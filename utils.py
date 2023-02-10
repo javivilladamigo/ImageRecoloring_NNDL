@@ -206,3 +206,44 @@ class Plotter_GAN(object):
         fig.savefig(f'{out_path}loss/losses.png', dpi = 200)
         plt.clf()
         plt.close()
+
+
+
+def plot_DGloss(G, D, legend_loc = 'best', save = False):
+
+    fig, ax = plt.subplots(1, 1, figsize=(8,6))
+    
+    ax2 = ax.twinx()
+    
+    colors = ['#004C97', '#AF272F', '#4C8C2B', '#63666A']
+    
+    ax.plot(G, label='Generator loss', color = colors[0], ls = '-', lw = 2, alpha = 0.8, )
+    ax2.plot(D, label='Discriminator loss', color = colors[1], ls = '-', lw = 2, alpha = 0.8, )
+    
+    ax.set_xlabel('Epoch', fontsize = 18)
+    ax.set_ylabel('Loss', fontsize = 18)
+    
+    # highlight axis
+    ax2.spines['right'].set_color('#AF272F')
+    ax2.yaxis.label.set_color('#AF272F') 
+    ax2.tick_params(axis='y', which='both', colors='#AF272F')
+    # legend
+    lines, labels = ax.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax2.legend(lines + lines2, labels + labels2, loc=legend_loc, fontsize=13, frameon=False)
+    
+    
+    for axs in fig.get_axes():
+        axs.tick_params(axis = 'both', labelsize = 14.5)
+    
+    fig.tight_layout()
+    
+    if save:
+        fig.savefig('disc_gen_loss.pdf', dpi = 200)
+       
+    plt.show()    
+    
+    return fig
+
+
+
